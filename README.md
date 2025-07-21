@@ -2,10 +2,11 @@ This is the repository for the 'Virtual Acoustics in Immersive Audio' workshop t
 and Gloria Dal Santo (Aalto University). We will upload assignments and code here.
 
 ### Installation
-- Fork the repo to your github account.
+- Fork the repo to your github account (optional).
 - Clone the repository to your local machine using `git clone https://github.com/YOUR-USERNAME/VAIAWorkshop25Public.git`
-- Create a virtual environment with `python3 -m venv .venv`. For Linux/Mac users, activate the virtual environment with `source .venv/bin/activate`. For Windows users, activate virtual environment with `C:\> .venv\Scripts\activate.bat` on the command prompt, or `C:\> .venv\Scripts\Activate.ps1` on PowerShell(not tested).
-- Install the repository with `pip install -e .` `pyproject.toml` contains all dependendies. Installation with pyproject.toml requires pip > 21.3.
+- Create a virtual environment with `python3.10 -m venv .venv`. For Linux/Mac users, activate the virtual environment with `source .venv/bin/activate`. For Windows users, activate virtual environment with `C:\> .venv\Scripts\activate.bat` on the command prompt, or `C:\> .venv\Scripts\Activate.ps1` on PowerShell(not tested).
+ - If you don't have python 3.10, you can install it with homebrew : `brew install python@3.10`
+- Install the repository with `pip install -e .` `pyproject.toml` contains all dependendies. Installation with pyproject.toml requires pip > 21.3. Upgrade pip with `pip install --upgrade pip`.
 - In week 2, we will ask you to generate and save spatial audio data in the [SOFA format](https://www.sofaconventions.org/mediawiki/index.php/SOFA_(Spatially_Oriented_Format_for_Acoustics)). We will load these files into the [SPARTA plugin suite](https://github.com/leomccormack/SPARTA/releases/tag/v1.7.1) and auralize them in a DAW. For one of the assignments, we will use the [3DTI Spatialiser VST plugin](https://github.com/3DTune-In/3dti_AudioToolkit/releases). Make sure you have SPARTA and 3DTI installed, along with any DAW of your choice (we recommend using [Reaper](https://www.reaper.fm/)). 
 
 ### Structure
@@ -13,7 +14,7 @@ and Gloria Dal Santo (Aalto University). We will upload assignments and code her
 	- The code for week 1 is in the `room_acoustics` folder
 	- The code for week 2 is in the `spatial_audio` folder
 	- Reusable functions across both weeks are in `utils.py`
-- All test code should be in `jupyter notebooks` and placed in the [notebooks](notebooks/) folder (NOT in `src`). 
+- All test code should be in `jupyter notebooks` and placed in the [notebooks](notebooks/) folder (NOT in `src`). To open a jupyter notebook, go to the terminal, activate virtual environment, and write `jupyter notebook &`. This will open notebooks in your browser.
 	- You can call functions in the `src` folder from your notebooks. For example, to use the `t60_estimator` function in `src/room_acoustics/analysis.py`, you can write `from room_acoustics.analysis import t60_estimator` in your notebook.
 	- When requesting assistance after the lecture hours, please submit plots and wav files along with your notebooks. For plotting we will use the `matplotlib` library and for reading/writing wav files we will use the `soundfile` library. 
 - The instructions for assignments are in the [assignments](assignments/) folder. The assignments span a week each, but are divided in several parts.
