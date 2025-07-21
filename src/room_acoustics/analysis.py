@@ -35,12 +35,21 @@ def schroeder_backward_int(
         Tuple containing the backward integrated and normalized array, and the normalization value(s) used.
     """
 
-    ### WRITE YOUR CODE HERE ###
     # Flip the input array to prepare for backward integration
+    h = x[::-1]
+    
     # Subtract noise power from the squared signal if requested (This will use in section 4.3)
+    if subtract_noise:
+        input = h**2 - noise_level
+    else
+        input = h**2
+    
     # Compute cumulative sum (integration) over the reversed array
+    result = np.cumsum(input)
+    
     # Flip the result back to original order
-
+    out = result[::-1]
+    
     # Normalize the energy if requested
     if energy_norm:
         norm_vals = np.max(out, keepdims=True, axis=-1)  # per channel
@@ -95,15 +104,18 @@ def compute_edc(
     """
     # Remove filtering artefacts (last 5 permille)
     out = discard_last_n_percent(x, 0.5)
+    
     # Filter the signal with a fractional octave filterbank if requested
     if use_filterbank:
         out = filterbank(out, n_fractions, f_min=f_min, f_max=f_max, sample_rate=fs, compensate_energy=compensate_fbnk_energy)[0]
-
-    ### WRITE YOUR CODE HERE ###
+    
     # Compute EDCs using Schroeder backward integration
+    EDC, _ = schroeder_backward_int(out, energy_norm=energy_norm, subtract_noise=subtract_noise, noise_level=noise_level)
+    
     # Convert to dB scale
+    EDC_dB = 10*np.log10(EDC)
 
-    return out
+    return EDC_dB
 
 
 def estimate_rt60(
@@ -139,10 +151,15 @@ def estimate_rt60(
         - valid_range : NDArray
             Boolean array indicating the samples used for the fit
     """
-    ### WRITE YOUR CODE HERE ###
     # Select the range of EDC values between decay_start_db and decay_end_db and save it in valid_range
+    valid_range = np.where((edc_db <= decay_start_db) & (edc_db >= decay_end_db))
+
     # Perform linear regression with scipy.stats's linregress on the selected range to estimate decay slope and intercept
+    slope, intercept, _ = linregress(valid_range, edc_db[valid_range])
+
     # Calculate RT60 as the time required for a 60 dB decay
+    rt60 = time[valid_range[0]] - time[valid_range[-1]]
+
     return rt60, slope, intercept, valid_range
 
 
@@ -174,12 +191,16 @@ def compute_edr(
     # Remove filtering artefacts (last 5 permille)
     out = discard_last_n_percent(x, 0.5)
 
-    ### WRITE YOUR CODE HERE ###
     # Compute the Short-Time Fourier Transform (STFT) magnitude
-    # Apply Schroeder backward integration to each time-frequency bin
-    # Convert energy to decibel (dB) scale, adding a small offset to avoid log(0)
+    H = spectrogram(out, mode='magnitude')
 
-    return out
+    # Apply Schroeder backward integration to each time-frequency bin
+    EDR, _ = schroeder_backward_int(H, energy_norm=energy_norm, subtract_noise=subtract_noise, noise_level=noise_level)
+
+    # Convert energy to decibel (dB) scale, adding a small offset to avoid log(0)
+    EDR_dB = 10*np.log10(EDR)
+    
+    return EDR_dB
 
 
 def normalized_echo_density(
@@ -230,6 +251,7 @@ def normalized_echo_density(
         else:
             variance = np.average((signal)**2, weights=window_func)
         return np.sqrt(variance)
+    
     # erfc(1/√2)
     ERFC = 0.3173
 
@@ -248,12 +270,19 @@ def normalized_echo_density(
     window_func = window_func / sum(window_func)
     # Slide window across RIR and compute normalized echo density
     for cursor in range(len(rir)):
-        pass # REMOVE THIS LINE AND IMPLEMENT THE FUNCTION
-        ### WRITE YOUR CODE HERE ###
         # Extract the current frame from the padded RIR
+        frame = padded_rir[cursor]
+
         # Compute the weighted standard deviation of the frame
+        frame_weighted_std = weighted_std(signal=frame, window_func=window_func)
+
         # Count the number of samples above the weighted standard deviation, weighted by the window function
+        count = len(np.where(frame > frame_weighted_std))
+
         # Normalize the count by the ERFC constant and store it in the output array
+        output[cursor] = count / ERFC
+
     # Remove padding to match original RIR length
     ned = output[:-window_length_samps]
+
     return ned
