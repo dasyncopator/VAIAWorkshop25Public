@@ -39,10 +39,9 @@ def schroeder_backward_int(
     h = x[::-1]
     
     # Subtract noise power from the squared signal if requested (This will use in section 4.3)
+    input = h**2
     if subtract_noise:
-        input = h**2 - noise_level
-    else
-        input = h**2
+        input -= noise_level
     
     # Compute cumulative sum (integration) over the reversed array
     result = np.cumsum(input)
@@ -113,7 +112,7 @@ def compute_edc(
     EDC, _ = schroeder_backward_int(out, energy_norm=energy_norm, subtract_noise=subtract_noise, noise_level=noise_level)
     
     # Convert to dB scale
-    EDC_dB = 10*np.log10(EDC)
+    EDC_dB = 10*np.log10(EDC + 1e-10)
 
     return EDC_dB
 
@@ -155,12 +154,12 @@ def estimate_rt60(
     valid_range = np.where((edc_db <= decay_start_db) & (edc_db >= decay_end_db))
 
     # Perform linear regression with scipy.stats's linregress on the selected range to estimate decay slope and intercept
-    slope, intercept, _ = linregress(valid_range, edc_db[valid_range])
-
+    result = linregress(valid_range, edc_db[valid_range])
+    
     # Calculate RT60 as the time required for a 60 dB decay
     rt60 = time[valid_range[0]] - time[valid_range[-1]]
 
-    return rt60, slope, intercept, valid_range
+    return rt60, result.slope, result.intercept, valid_range
 
 
 def compute_edr(
@@ -198,7 +197,7 @@ def compute_edr(
     EDR, _ = schroeder_backward_int(H, energy_norm=energy_norm, subtract_noise=subtract_noise, noise_level=noise_level)
 
     # Convert energy to decibel (dB) scale, adding a small offset to avoid log(0)
-    EDR_dB = 10*np.log10(EDR)
+    EDR_dB = 10*np.log10(EDR + 1e-10)
     
     return EDR_dB
 
@@ -250,6 +249,7 @@ def normalized_echo_density(
             variance = np.average((signal - average)**2, weights=window_func)
         else:
             variance = np.average((signal)**2, weights=window_func)
+            
         return np.sqrt(variance)
     
     # erfc(1/√2)
@@ -268,8 +268,10 @@ def normalized_echo_density(
     output = np.zeros(len(rir) + 2 * half_window)
     window_func = np.hanning(window_length_samps)
     window_func = window_func / sum(window_func)
+
     # Slide window across RIR and compute normalized echo density
     for cursor in range(len(rir)):
+
         # Extract the current frame from the padded RIR
         frame = padded_rir[cursor]
 
