@@ -56,19 +56,18 @@ class FeedbackDelayNetwork:
         feedback_matrix_type = feedback_matrix_type.lower()
 
         if feedback_matrix_type == 'identity':
-            ## WRITE YOUR CODE HERE ##
-            pass 
+            Q = np.eye(self.N)
         elif feedback_matrix_type == 'random':
             # this is one way to generate a random orthogonal matrix based on QR decomposition
             A = np.random.randn(self.N, self.N)
             Q, R = np.linalg.qr(A)
             Q = np.matmul(Q, np.diag(np.sign(np.diag(R)))) 
         elif feedback_matrix_type == 'hadamard':
-            ## WRITE YOUR CODE HERE ##
-            pass 
+            assert self.N > 0 and (self.N & (self.N - 1)) == 0, f'Expected number of delays to be a power of 2, got {self.N} instead'
+            Q = (1 / np.sqrt(2) ** self.N) * sp.linalg.hadamard(self.N)
         elif feedback_matrix_type == 'householder':
-            ## WRITE YOUR CODE HERE ##
-            pass 
+            v = np.array(self.delay_lengths)
+            Q = np.eye(self.N) - 2 * v * v.T
         elif feedback_matrix_type == 'circulant':
             v = np.random.randn(self.N)
             R = np.fft.fft(v)
@@ -114,18 +113,19 @@ class FeedbackDelayNetwork:
         
         # process each sample individually
         for sample in input_signal:
-            ### WRITE YOUR CODE HERE ###
-            pass
             # read output from the delay lines
-            # compute the new input ´delay_input´ to the delay lines 
-
+            delay_output = np.array([delay[-1] for delay in self.delay_buffers])
+            # compute the new input ´delay_input´ to the delay lines
+            delay_input = self.feedback_matrix @ delay_output + self.input_gains.squeeze() * sample
             for i in range(self.N):
-                pass
-                # store ´delay_input´ in the delay buffers
+                # store ´delay_input´ in the delay buffer
+                self.delay_buffers[i][self.write_indices[i]] = delay_input[i]
                 # update the write index for each delay line
-                
+                self.delay_buffers[i] = np.roll(self.delay_buffers[i], 1)
             # compute the output sample by multiplying the feedback input with the output gains
+            output_sample = np.dot(self.output_gains.squeeze(), delay_output)
             # you can the "append" method to store the output samples
+            output_signal.append(output_sample)
 
         self.output = np.array(output_signal)
         return self.output
