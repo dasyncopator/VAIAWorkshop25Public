@@ -80,10 +80,10 @@ def decay_kernel(
     if len(t_values.shape) == 1:
         t_values = np.expand_dims(t_values, axis=0)
 
-    #### WRITE YOUR CODE HERE ####
     # calculate the decay time constant tau from T60 - save them in a variable called tau_vals
+    tau_vals = t_values / 13.8
     # calculate the exponential decay kernel
-
+    exponential = np.exp(np.einsum('nb, t -> ntb', -1 / tau_vals, time))
     # normalise the kernel to have unit energy
     if normalize_envelope:
         exponential = np.einsum("ntb, nb -> ntb", exponential,
@@ -92,10 +92,9 @@ def decay_kernel(
     if add_noise:
         # calculate noise
         ir_len = len(time)
-        ### WRITE YOUR CODE HERE ####
         # generate the kernel for the noise, which should be a linearly decaying signal from ir_len to 0
+        noise = ir_len - time
         # tile it along the exponential decay kernel 
-
         exponential = np.concatenate((exponential, noise), axis=-1)
     
     return exponential
