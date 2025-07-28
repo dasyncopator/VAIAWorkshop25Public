@@ -100,14 +100,10 @@ class HRIRInterpolator:
             """Get the 4 HRIRs from the flattened data"""
             return e_idx * num_az + a_idx
 
-        #### WRITE YOUR CODE HERE ####
-
         # create new grid of azimuth angles, in SOFA these range from [-180, +180] degrees
-        # call the variable az_angles
-
+        az_angles = np.linspace(-180, 180, new_az_res)
         # create new grid of elevation angles, in SOFA these range from [-90 +90] degrees
-        # call the variable el_angles
-
+        el_angles = np.meshgrid(-90, 90, new_el_res)
         # create a 2D meshgrid with both azimuth and elevation angles
         new_az_grid, new_el_grid = np.meshgrid(az_angles, el_angles)
         az_query = new_az_grid.ravel()
@@ -128,7 +124,6 @@ class HRIRInterpolator:
 
         for az_new, el_new in tqdm(zip(az_query, el_query),
                                    total=len(az_query)):
-
             # Find indices of HRIRs in original dataset closest to az_new, el_new
             az_idx = np.searchsorted(az_grid, az_new) - 1
             az_idx = np.clip(az_idx, 0, num_az - 2)
@@ -136,18 +131,25 @@ class HRIRInterpolator:
             el_idx = np.searchsorted(el_grid, el_new) - 1
             el_idx = np.clip(el_idx, 0, num_el - 2)
 
-            #### WRITE YOUR CODE HERE ####
-
             # find theta_grid and phi_grid
-
+            theta_grid = az_grid[az_idx]
+            phi_grid =  el_grid[el_idx]
             # find c_theta and c_phi
-
+            c_theta = (az_new % theta_grid) / theta_grid
+            c_phi = (el_new % phi_grid) / phi_grid
             # get the interpolation weights
-
+            interp_weights = np.array([(1 - c_theta) * (1 - c_phi),
+                                       c_theta * (1 - c_phi),
+                                       c_theta * c_phi,
+                                       (1 - c_theta) * c_phi])
             # get the four nearest HRIRs (use get_index() function)
-
+            idx_a = get_index(el_idx, az_idx)
+            idx_b = get_index(el_idx, az_idx + 1)
+            idx_c = get_index(el_idx + 1, az_idx)
+            idx_d = get_index(el_idx + 1, az_idx + 1)
             # find the interpolated HRIR and append it to hrirs_interp
-
+            hrir_interp = interp_weights[0] * self.hrir_set.hrir_data[idx_a] + interp_weights[1] * self.hrir_set.hrir_data[idx_b] + interp_weights[2] * self.hrir_set.hrir_data[idx_c] + interp_weights[3] * self.hrir_set.hrir_data[idx_d]
+            hrirs_interp.append(hrir_interp)
         # Stack all interpolated HRIRs into numpy array
         hrirs_interp = np.stack(
             hrirs_interp, axis=0)  # shape: (num_new_points, time_samples, 2)
