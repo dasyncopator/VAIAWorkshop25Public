@@ -101,9 +101,9 @@ class HRIRInterpolator:
             return e_idx * num_az + a_idx
 
         # create new grid of azimuth angles, in SOFA these range from [-180, +180] degrees
-        az_angles = np.linspace(-180, 180, new_az_res)
+        az_angles = np.arange(-180, 180, new_az_res)
         # create new grid of elevation angles, in SOFA these range from [-90 +90] degrees
-        el_angles = np.meshgrid(-90, 90, new_el_res)
+        el_angles = np.arange(-90, 90, new_el_res)
         # create a 2D meshgrid with both azimuth and elevation angles
         new_az_grid, new_el_grid = np.meshgrid(az_angles, el_angles)
         az_query = new_az_grid.ravel()
