@@ -135,8 +135,6 @@ def rir_from_sweep(meas_sweep: Union[ArrayLike, NDArray],
     else:
         meas_sweep = meas_sweep[:, np.newaxis]
 
-    #### WRITE YOUR CODE HERE ####
-
     # truncate sweep signals from start_time_ms to start_time_ms + end_time_ms
     start_time_samps = ms_to_samps(start_time_ms, fs)
     end_time_samps = start_time_samps + ms_to_samps(end_time_ms, fs)
@@ -147,13 +145,14 @@ def rir_from_sweep(meas_sweep: Union[ArrayLike, NDArray],
                                   extra_padding_samps, :]
     dry_sweep_trunc = dry_sweep[start_time_samps:end_time_samps, :]
 
-    #### WRITE YOUR CODE HERE ####
-
     # time flip the dry sweep signal
+    dry_sweep_trunc_flipped = np.flip(dry_sweep_trunc)
 
     # convolve the measured sweep signals and the time flipped dry sweep signal
+    rirs = scipy.signal.fftconvolve(meas_sweep_trunc, dry_sweep_trunc_flipped, mode='same', axes=0)
 
     # return the RIRs
+    return rirs
 
 
 def audioread(rir_path: str, to_mono: bool = True) -> tuple[np.ndarray, int]:
