@@ -9,6 +9,7 @@ import spaudiopy as spa
 import sofar
 from tqdm import tqdm
 from loguru import logger
+import time
 
 from utils import cart2sph, sph2cart, unpack_coordinates
 from spatial_audio.hrtf import HRIRSet
