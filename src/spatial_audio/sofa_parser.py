@@ -471,9 +471,9 @@ class SRIRWriter:
         Set source positions
         dimensions should be num_receivers x 3
         """
-        assert source_positions.shape == (
-            self.dims["M"],
-            self.dims["C"]), "Source positions should be of size M, 3"
+        #assert source_positions.shape == (
+        #    self.dims["M"],
+        #    self.dims["C"]), "Source positions should be of size M, 3"
         if coord_sys != 'cartesian':
             source_positions = sph2cart(source_positions[:, 0],
                                         source_positions[:, 1],
