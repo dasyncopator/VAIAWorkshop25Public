@@ -93,27 +93,27 @@ def convert_srir_to_brir(srirs: NDArray, hrir_sh: NDArray,
     num_orientations = head_orientations.shape[0]
     brirs = np.zeros((num_receivers, num_orientations, num_freq_bins, 2))
 
-    #### WRITE YOUR CODE HERE ####
-
     # loop through receiver positions
     for rec_pos_idx in tqdm(range(num_receivers)):
 
         # get current SRIR FFT = shape is num_ambi_channels x num_freqs
+        srir_fft = ambi_rtfs[rec_pos_idx]
 
         # loop through head orientations
         for ori_idx in range(num_orientations):
-
-            pass
             # get current head orientation
-
+            orientation = head_orientations[np.newaxis, ori_idx]
+            az, el, r = unpack_coordinates(orientation)
             # get rotation matrix in the opposite direction - size num_freq_bins x num_ambi_channels
-
+            x, y, z = unpack_coordinates(sph2cart(az, el, r))
+            D = spa.sph.sh_rotation_matrix(ambi_order, z, y, x)
             # get current rotated SRIR
-
+            srir_rotated = srir_fft * D
             # get the binaural room transfer function by conjugating
             # freq-domain SRIRs and multiplying them with SH-HRTFs
-
+            brtf = srir_rotated.H * ambi_hrtfs
             # get the BRIR by taking an inverse FFT and save it to current
             # receiver position and orientation index
+            brirs[ori_idx] = irfft(brtf, n=num_freq_bins)
 
     return brirs

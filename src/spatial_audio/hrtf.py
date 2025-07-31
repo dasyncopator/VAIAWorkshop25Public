@@ -78,11 +78,8 @@ class HRIRSet:
         """
         # 1. Compute HRTFs from time-domain HRIRs
         fft_size = 2**int(np.ceil(np.log2(self.ir_len_samps)))
-
-        #### WRITE YOUR CODE HERE ####
-
         # Get the FFT of the HRIRs and save it as the variable hrtfs
-
+        hrtfs = rfft(self.hrir_data, n=fft_size)
         # Create the spherical grid
         incidence_az = np.deg2rad(self.listener_view[..., 0])
         # zenith angle is different from elevation angle
@@ -90,17 +87,18 @@ class HRIRSet:
                                    self.listener_view[..., 1])  # zenith angle
 
         # Get quadrature weights from spa.grids.calculate_grid_weights
+        w = spa.grids.calculate_grid_weights(incidence_az, incidence_zen, ambi_order)
         # and create a diagonal matrix out of them, call it W.
-
+        W = np.diag(w)
         # Get spherical harmonic matrix, Y, using incidence_az, incidence_zen - shape (num_dirs, num_sh_channels)
-
+        Y = spa.sph.sh_matrix(ambi_order, incidence_az, incidence_zen)
         # Calculate (WY)^\dagger W
-
+        G = np.linalg.pinv(W @ Y) @ W 
         # Multiply (WY)^\dagger W with hrtfs to get output of shape num_sh_channels, 2, num_freq_bins
-
+        G = np.einsum('ij, jkl -> ikl', G, hrtfs)
         # Take inverse FFT to get SH domain BRIR of shape: (num_sh_channels, 2, num_time_samples) and return it
-
-        return
+        g = irfft(G, n=fft_size)
+        return g
 
 
 class HRIRInterpolator:
